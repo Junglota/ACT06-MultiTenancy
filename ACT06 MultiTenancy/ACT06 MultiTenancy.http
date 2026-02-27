@@ -1,0 +1,6 @@
+@ACT06_MultiTenancy_HostAddress = http://localhost:5194
+
+GET {{ACT06_MultiTenancy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
