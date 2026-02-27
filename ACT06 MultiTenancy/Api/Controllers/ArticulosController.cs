@@ -41,9 +41,9 @@ public class ArticulosController : ControllerBase
         return Ok(items);
     }
 
-    // GET: api/articulos/{id}
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    // GET: api/articulos/codigo/{codigo}
+    [HttpGet("codigo/{codigo}")]
+    public async Task<IActionResult> GetByCodigo(Guid id, CancellationToken ct)
     {
         var item = await _db.Articulos
             .Where(x => x.Id == id)
@@ -94,14 +94,14 @@ public class ArticulosController : ControllerBase
             return Conflict("Ya existe un artículo con ese código en este tenant.");
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+        return CreatedAtAction(nameof(GetByCodigo), new { Codigo = entity.Codigo }, entity);
     }
 
-    // PUT: api/articulos/{id}
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] ArticuloUpdateRequest req, CancellationToken ct)
+    // PUT: api/articulos/{codigo}
+    [HttpPut("codigo/{codigo}")]
+    public async Task<IActionResult> Update(string codigo, [FromBody] ArticuloUpdateRequest req, CancellationToken ct)
     {
-        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
         if (item is null) return NotFound();
 
         item.Codigo = req.Codigo.Trim();
@@ -116,18 +116,18 @@ public class ArticulosController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _log.Warning(ex, "Error actualizando artículo. Id={Id}", id);
+            _log.Warning(ex, "Error actualizando artículo. Codigo={Codigo}", codigo);
             return Conflict("Conflicto actualizando el artículo (código duplicado en este tenant).");
         }
 
         return Ok(item);
     }
 
-    // DELETE: api/articulos/{id}
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    // DELETE: api/articulos/{codigo}
+    [HttpDelete("codigo/{codigo}")]
+    public async Task<IActionResult> Delete(string codigo, CancellationToken ct)
     {
-        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
         if (item is null) return NotFound();
 
         _db.Articulos.Remove(item);
@@ -136,13 +136,13 @@ public class ArticulosController : ControllerBase
         return NoContent();
     }
 
-    // POST: api/articulos/{id}/entrada
-    [HttpPost("{id:guid}/entrada")]
-    public async Task<IActionResult> Entrada(Guid id, [FromBody] MovimientoInventarioRequest req, CancellationToken ct)
+    // POST: api/articulos/codigo/{codigo}/entrada
+    [HttpPost("codigo/{codigo}/entrada")]
+    public async Task<IActionResult> Entrada(string codigo, [FromBody] MovimientoInventarioRequest req, CancellationToken ct)
     {
         if (req.Cantidad <= 0) return BadRequest("Cantidad debe ser mayor que 0.");
 
-        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
         if (item is null) return NotFound();
 
         item.Stock += req.Cantidad;
@@ -150,19 +150,19 @@ public class ArticulosController : ControllerBase
 
         await _db.SaveChangesAsync(ct);
 
-        _log.Information("Entrada inventario. Articulo={Id} Cantidad={Cantidad} NuevoStock={Stock} Nota={Nota}",
-            id, req.Cantidad, item.Stock, req.Nota);
+        _log.Information("Entrada inventario. Articulo={codigo} Cantidad={Cantidad} NuevoStock={Stock} Nota={Nota}",
+            codigo, req.Cantidad, item.Stock, req.Nota);
 
-        return Ok(new { item.Id, item.Codigo, item.Nombre, item.Stock });
+        return Ok(new {item.Codigo, item.Nombre, item.Stock });
     }
 
-    // POST: api/articulos/{id}/salida
-    [HttpPost("{id:guid}/salida")]
-    public async Task<IActionResult> Salida(Guid id, [FromBody] MovimientoInventarioRequest req, CancellationToken ct)
+    // POST: api/articulos/codigo/{codigo}/salida
+    [HttpPost("codigo/{codigo}/salida")]
+    public async Task<IActionResult> Salida(string codigo, [FromBody] MovimientoInventarioRequest req, CancellationToken ct)
     {
         if (req.Cantidad <= 0) return BadRequest("Cantidad debe ser mayor que 0.");
 
-        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var item = await _db.Articulos.FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
         if (item is null) return NotFound();
 
         if (item.Stock - req.Cantidad < 0)
@@ -173,9 +173,9 @@ public class ArticulosController : ControllerBase
 
         await _db.SaveChangesAsync(ct);
 
-        _log.Information("Salida inventario. Articulo={Id} Cantidad={Cantidad} NuevoStock={Stock} Nota={Nota}",
-            id, req.Cantidad, item.Stock, req.Nota);
+        _log.Information("Salida inventario. Articulo={codigo} Cantidad={Cantidad} NuevoStock={Stock} Nota={Nota}",
+            codigo, req.Cantidad, item.Stock, req.Nota);
 
-        return Ok(new { item.Id, item.Codigo, item.Nombre, item.Stock });
+        return Ok(new {item.Codigo, item.Nombre, item.Stock });
     }
 }
