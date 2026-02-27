@@ -4,8 +4,8 @@ WORKDIR /src
 
 COPY . .
 # Cambia la ruta al csproj real:
-RUN dotnet restore "./Primer parcial/Primer parcial.csproj"
-RUN dotnet publish "./Primer parcial/Primer parcial.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet restore "./ACT06 MultiTenancy/ACT06 MultiTenancy.csproj"
+RUN dotnet publish "./ACT06 MultiTenancy/ACT06 MultiTenancy.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
@@ -15,4 +15,4 @@ COPY --from=build /app/publish .
 # Railway expone PORT
 ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
 
-ENTRYPOINT ["dotnet", "Primer parcial.dll"]
+ENTRYPOINT ["dotnet", "ACT06 MultiTenancy.dll"]
