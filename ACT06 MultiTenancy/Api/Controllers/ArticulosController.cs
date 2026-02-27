@@ -30,7 +30,6 @@ public class ArticulosController : ControllerBase
         var items = await _db.Articulos
             .OrderBy(x => x.Nombre)
             .Select(x => new ArticuloResponse(
-                x.Id,
                 x.Codigo,
                 x.Nombre,
                 x.Descripcion,
@@ -49,7 +48,6 @@ public class ArticulosController : ControllerBase
         var item = await _db.Articulos
             .Where(x => x.Id == id)
             .Select(x => new ArticuloResponse(
-                x.Id,
                 x.Codigo,
                 x.Nombre,
                 x.Descripcion,
