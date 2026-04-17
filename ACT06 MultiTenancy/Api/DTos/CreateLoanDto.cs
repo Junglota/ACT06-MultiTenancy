@@ -12,5 +12,9 @@ namespace ACT06_MultiTenancy.Api.DTos
 
         [MaxLength(500)]
         public string? Notes { get; set; }
+        [MaxLength(500)]
+        public string? BorrowerName { get; set; }
+        [MaxLength(500)]
+        public string? BorrowerEmail { get; set; }
     }
 }

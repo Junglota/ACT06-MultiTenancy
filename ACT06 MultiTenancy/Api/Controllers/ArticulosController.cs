@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using static ACT06_MultiTenancy.Api.DTos.EquiposDto;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -174,4 +175,143 @@ public class ArticulosController : ControllerBase
 
         return Ok(new {item.Codigo, item.Nombre, item.Stock });
     }
+
+
+    [HttpGet("catalogo")]
+    public async Task<IActionResult> GetEquipos(
+            [FromQuery] Guid? tipoId,
+            [FromQuery] Guid? sedeId,
+            [FromQuery] string? estado,
+            CancellationToken ct)
+    {
+        var tenantId = _tenant.TenantId;
+
+        if (string.IsNullOrWhiteSpace(tenantId))
+            return Unauthorized(new { message = "Tenant no encontrado." });
+
+        var tipos = await _db.TiposEquipo
+            .OrderBy(x => x.Nombre)
+            .Select(x => new TipoEquipoFilterDto
+            {
+                Id = x.Id,
+                Nombre = x.Nombre
+            })
+            .ToListAsync(ct);
+
+        var sedes = await _db.Sedes
+            .OrderBy(x => x.Nombre)
+            .Select(x => new SedeFilterDto
+            {
+                Id = x.Id,
+                Nombre = x.Nombre
+            })
+            .ToListAsync(ct);
+
+        var articulos = await _db.Articulos
+            .Include(x => x.TipoEquipo)
+            .Include(x => x.Sede)
+            .OrderBy(x => x.Nombre)
+            .ToListAsync(ct);
+
+        var articleIds = articulos.Select(x => x.Id).ToList();
+
+        var activeLoansGrouped = await _db.Loans
+            .Where(x => x.TenantId == tenantId &&
+                        x.Status == "Active" &&
+                        articleIds.Contains(x.ArticleId))
+            .GroupBy(x => x.ArticleId)
+            .Select(g => new
+            {
+                ArticleId = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync(ct);
+
+        var activeLoansMap = activeLoansGrouped.ToDictionary(x => x.ArticleId, x => x.Count);
+
+        var items = articulos.Select(a =>
+        {
+            activeLoansMap.TryGetValue(a.Id, out var prestamosActivos);
+
+            var estadoCalculado = GetEstadoArticulo(
+                a.EstadoOperativo,
+                a.Stock,
+                prestamosActivos
+            );
+
+            return new EquipoCardDto
+            {
+                Id = a.Id,
+                Codigo = a.Codigo,
+                Nombre = a.Nombre,
+                Descripcion = a.Descripcion,
+                TipoEquipo = a.TipoEquipo?.Nombre ?? "Sin tipo",
+                Sede = a.Sede?.Nombre,
+                Stock = a.Stock,
+                PrestamosActivos = prestamosActivos,
+                Estado = estadoCalculado
+            };
+        });
+
+        if (tipoId.HasValue)
+        {
+            items = items.Where(x =>
+                articulos.Any(a => a.Id == x.Id && a.TipoEquipoId == tipoId.Value));
+        }
+
+        if (sedeId.HasValue)
+        {
+            items = items.Where(x =>
+                articulos.Any(a => a.Id == x.Id && a.SedeId == sedeId.Value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(estado))
+        {
+            items = items.Where(x => x.Estado.Equals(estado, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var orderedItems = items
+            .OrderBy(x => GetEstadoOrder(x.Estado))
+            .ThenBy(x => x.Nombre)
+            .ToList();
+
+        var response = new EquiposResponseDto
+        {
+            Filters = new EquiposFiltersDto
+            {
+                Tipos = tipos,
+                Sedes = sedes,
+                Estados = new List<string>
+                    {
+                        "Disponible",
+                        "Prestado",
+                        "Mantenimiento"
+                    }
+            },
+            Items = orderedItems
+        };
+
+        return Ok(response);
+    }
+
+    private static string GetEstadoArticulo(string? estadoOperativo, int stock, int prestamosActivos)
+    {
+        if (string.Equals(estadoOperativo, "Mantenimiento", StringComparison.OrdinalIgnoreCase))
+            return "Mantenimiento";
+
+        return stock > prestamosActivos ? "Disponible" : "Prestado";
+    }
+
+    private static int GetEstadoOrder(string estado)
+    {
+        return estado switch
+        {
+            "Disponible" => 0,
+            "Prestado" => 1,
+            "Mantenimiento" => 2,
+            _ => 3
+        };
+    }
+
+
 }

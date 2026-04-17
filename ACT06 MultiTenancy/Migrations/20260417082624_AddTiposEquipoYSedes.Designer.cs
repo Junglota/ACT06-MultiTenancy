@@ -3,6 +3,7 @@ using System;
 using ACT06_MultiTenancy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ACT06_MultiTenancy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417082624_AddTiposEquipoYSedes")]
+    partial class AddTiposEquipoYSedes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -159,19 +162,9 @@ namespace ACT06_MultiTenancy.Migrations
                     b.Property<string>("Descripcion")
                         .HasColumnType("text");
 
-                    b.Property<string>("EstadoOperativo")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasDefaultValue("Disponible");
-
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("SedeId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Stock")
                         .HasColumnType("integer");
@@ -180,17 +173,10 @@ namespace ACT06_MultiTenancy.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("TipoEquipoId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SedeId");
-
-                    b.HasIndex("TipoEquipoId");
 
                     b.HasIndex("TenantId", "Codigo")
                         .IsUnique();
@@ -215,64 +201,6 @@ namespace ACT06_MultiTenancy.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Notes");
-                });
-
-            modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.Sede", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Nombre")
-                        .IsUnique();
-
-                    b.ToTable("Sedes", (string)null);
-                });
-
-            modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.TipoEquipo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Nombre")
-                        .IsUnique();
-
-                    b.ToTable("TiposEquipo", (string)null);
                 });
 
             modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.User", b =>
@@ -315,33 +243,6 @@ namespace ACT06_MultiTenancy.Migrations
                         .IsRequired();
 
                     b.Navigation("Article");
-                });
-
-            modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.Articulo", b =>
-                {
-                    b.HasOne("ACT06_MultiTenancy.Domain.Entities.Sede", "Sede")
-                        .WithMany("Articulos")
-                        .HasForeignKey("SedeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ACT06_MultiTenancy.Domain.Entities.TipoEquipo", "TipoEquipo")
-                        .WithMany("Articulos")
-                        .HasForeignKey("TipoEquipoId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Sede");
-
-                    b.Navigation("TipoEquipo");
-                });
-
-            modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.Sede", b =>
-                {
-                    b.Navigation("Articulos");
-                });
-
-            modelBuilder.Entity("ACT06_MultiTenancy.Domain.Entities.TipoEquipo", b =>
-                {
-                    b.Navigation("Articulos");
                 });
 #pragma warning restore 612, 618
         }

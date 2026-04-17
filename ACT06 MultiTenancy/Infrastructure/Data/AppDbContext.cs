@@ -22,6 +22,8 @@ namespace ACT06_MultiTenancy.Infrastructure.Data
         public DbSet<Articulo> Articulos => Set<Articulo>();
         public DbSet<Loan> Loans { get; set; }
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<TipoEquipo> TiposEquipo => Set<TipoEquipo>();
+        public DbSet<Sede> Sedes => Set<Sede>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -84,6 +86,54 @@ namespace ACT06_MultiTenancy.Infrastructure.Data
                 entity.HasIndex(x => x.UserId);
                 entity.HasIndex(x => new { x.TenantId, x.UserId, x.IsRead });
                 entity.HasIndex(x => x.CreatedAtUtc);
+            });
+
+            modelBuilder.Entity<TipoEquipo>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
+            modelBuilder.Entity<Sede>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
+
+            modelBuilder.Entity<TipoEquipo>(entity =>
+            {
+                entity.ToTable("TiposEquipo");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.HasIndex(x => new { x.TenantId, x.Nombre })
+                      .IsUnique();
+            });
+
+            modelBuilder.Entity<Sede>(entity =>
+            {
+                entity.ToTable("Sedes");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.HasIndex(x => new { x.TenantId, x.Nombre })
+                      .IsUnique();
+            });
+
+            modelBuilder.Entity<Articulo>(entity =>
+            {
+                entity.HasOne(x => x.TipoEquipo)
+                      .WithMany(x => x.Articulos)
+                      .HasForeignKey(x => x.TipoEquipoId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Sede)
+                      .WithMany(x => x.Articulos)
+                      .HasForeignKey(x => x.SedeId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(x => x.EstadoOperativo)
+                      .HasMaxLength(30)
+                      .HasDefaultValue("Disponible");
             });
 
         }

@@ -31,6 +31,20 @@ namespace ACT06_MultiTenancy
 
             builder.Services.AddScoped<INotificationService, NotificationService>();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("CampusLoanFront", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://127.0.0.1:5500",
+                            "http://localhost:5500"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
             string? connStr;
 
@@ -112,9 +126,12 @@ namespace ACT06_MultiTenancy
             app.UseHttpsRedirection();
 
             app.UseSerilogRequestLogging();
+            
+            app.UseCors("CampusLoanFront");
 
             app.UseAuthentication();
             app.UseAuthorization();
+
 
 
             app.MapControllers();
