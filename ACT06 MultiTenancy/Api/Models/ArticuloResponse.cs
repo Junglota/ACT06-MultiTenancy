@@ -4,7 +4,6 @@
         string Codigo,
         string Nombre,
         string? Descripcion,
-        decimal Precio,
         int Stock
     );
 }

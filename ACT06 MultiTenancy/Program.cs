@@ -1,5 +1,6 @@
 
 using ACT06_MultiTenancy.Application.Interfaces;
+using ACT06_MultiTenancy.Application.Services;
 using ACT06_MultiTenancy.Infrastructure.Data;
 using ACT06_MultiTenancy.Infrastructure.Repositories;
 using ACT06_MultiTenancy.Infrastructure.Security;
@@ -27,6 +28,8 @@ namespace ACT06_MultiTenancy
             builder.Services.AddScoped<ITenantProvider, JwtTenantProvider>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
+
+            builder.Services.AddScoped<INotificationService, NotificationService>();
 
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
             string? connStr;

@@ -33,7 +33,6 @@ public class ArticulosController : ControllerBase
                 x.Codigo,
                 x.Nombre,
                 x.Descripcion,
-                x.Precio,
                 x.Stock
             ))
             .ToListAsync(ct);
@@ -51,7 +50,6 @@ public class ArticulosController : ControllerBase
                 x.Codigo,
                 x.Nombre,
                 x.Descripcion,
-                x.Precio,
                 x.Stock
             ))
             .FirstOrDefaultAsync(ct);
@@ -76,7 +74,6 @@ public class ArticulosController : ControllerBase
             Codigo = req.Codigo.Trim(),
             Nombre = req.Nombre.Trim(),
             Descripcion = req.Descripcion?.Trim(),
-            Precio = req.Precio,
             Stock = req.StockInicial,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
@@ -107,7 +104,6 @@ public class ArticulosController : ControllerBase
         item.Codigo = req.Codigo.Trim();
         item.Nombre = req.Nombre.Trim();
         item.Descripcion = req.Descripcion?.Trim();
-        item.Precio = req.Precio;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         try

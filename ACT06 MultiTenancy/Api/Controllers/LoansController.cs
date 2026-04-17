@@ -1,6 +1,8 @@
 ﻿using ACT06_MultiTenancy.Api.DTos;
 using ACT06_MultiTenancy.Api.Models;
 using ACT06_MultiTenancy.Application.Interfaces;
+using ACT06_MultiTenancy.Application.Services;
+using ACT06_MultiTenancy.Domain.Entities;
 using ACT06_MultiTenancy.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +15,13 @@ namespace ACT06_MultyTenancy.Controllers
     {
         private readonly AppDbContext _db;
         private readonly ITenantProvider _tenant;
+        private readonly INotificationService _notificationService;
 
-        public LoansController(AppDbContext context, ITenantProvider tenant)
+        public LoansController(AppDbContext context, ITenantProvider tenant, INotificationService notificationService)
         {
             _db = context;
             _tenant = tenant;
-
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -92,6 +95,19 @@ namespace ACT06_MultyTenancy.Controllers
 
             await _db.SaveChangesAsync();
 
+            var user = await _db.Users
+                .FirstOrDefaultAsync(x =>x.TenantId == tenantId);
+
+            if (user == null)
+                return Unauthorized();
+
+            await _notificationService.CreateLoanCreatedAsync(
+                                                                tenantId,
+                                                                user.Id, // importante
+                                                                loan,
+                                                                article.Nombre
+                                                            );
+
             return CreatedAtAction(nameof(GetLoanById), new { id = loan.Id }, loan);
         }
 
@@ -122,6 +138,16 @@ namespace ACT06_MultyTenancy.Controllers
             //     loan.Article.IsAvailable = true;
 
             await _db.SaveChangesAsync();
+
+            var user = await _db.Users
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId);
+
+            await _notificationService.CreateLoanReturnedAsync(
+                                            tenantId,
+                                            user.Id,
+                                            loan,
+                                            loan.Article?.Nombre ?? "Artículo"
+);
 
             return Ok(new { message = "Préstamo devuelto correctamente.", loan });
         }

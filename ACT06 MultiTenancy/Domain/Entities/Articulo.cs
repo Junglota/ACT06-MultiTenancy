@@ -9,9 +9,6 @@
         public string Codigo { get; set; } = default!;
         public string Nombre { get; set; } = default!;
         public string? Descripcion { get; set; }
-
-        public decimal Precio { get; set; }
-
         public int Stock { get; set; }
 
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
